@@ -1,0 +1,78 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:2.2.4'
+  }
+}
+
+apply plugin: 'base'
+apply plugin: 'ivy-publish'
+apply plugin: 'artifactory-publish'
+
+task buildTarball(type: Tar) {
+  baseName = "win32"
+  compression = Compression.GZIP
+  extension = "tar.gz"
+  destinationDir = buildDir
+
+  from {
+    projectDir
+  }
+  include 'include/**/*', 'lib/**/*', "msvc/**/*"
+  into "win32"
+}
+
+publishing {
+  repositories {
+    ivy {
+      url "${System.env.HOME}/.ivy2/local"
+      layout 'maven'
+    }
+  }
+
+  publications {
+    ivy(IvyPublication) {
+      artifact(buildTarball)
+    }
+  }
+}
+
+assemble {
+  dependsOn buildTarball
+}
+
+artifactoryPublish {
+  dependsOn assemble
+}
+
+artifactory {
+  contextUrl = "http://oss.jfrog.org"
+
+  resolve {
+    repository {
+      repoKey = 'libs-releases'
+    }
+  }
+
+  publish {
+    repository {
+      repoKey = 'oss-snapshot-local'
+      username = System.env.BINTRAY_USER
+      password = System.env.BINTRAY_API_KEY
+      ivy {
+        ivyLayout = "[organisation]/[module]/[revision]/ivy-[revision].xml"
+      }
+    }
+
+    defaults {
+      "ivy"
+    }
+  }
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.0'
+}

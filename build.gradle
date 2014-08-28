@@ -35,6 +35,7 @@ publishing {
 
   publications {
     ivy(IvyPublication) {
+
       artifact(buildTarball)
     }
   }
@@ -68,7 +69,7 @@ artifactory {
     }
 
     defaults {
-      "ivy"
+      publications ivy
     }
   }
 }
